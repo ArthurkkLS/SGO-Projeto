@@ -1,0 +1,70 @@
+@startuml SGO_Pacotes
+
+skinparam packageStyle frame
+skinparam packageBorderColor #333333
+skinparam packageBackgroundColor #FFFFFF
+skinparam packageFontSize 13
+skinparam packageFontStyle bold
+skinparam arrowColor #555555
+skinparam arrowThickness 1
+skinparam linetype ortho
+
+package "Interface" as apresentacao {
+  package "Telas de Competições"  as ui_comp
+  package "Telas de Inscrições"   as ui_insc
+  package "Telas de Locais"       as ui_loc
+  package "Telas de Resultados"   as ui_res
+  package "Telas de Medalhas"     as ui_med
+}
+
+package "Aplicação" as aplicacao {
+  package "Gestão de Competições" as svc_comp
+  package "Gestão de Inscrições"  as svc_insc
+  package "Gestão de Locais"      as svc_loc
+  package "Gestão de Resultados"  as svc_res
+  package "Relatórios"            as svc_rel
+}
+
+package "Domínio" as dominio {
+  package "Competição"  as dom_comp
+  package "Atleta"      as dom_atl
+  package "Inscrição"   as dom_insc
+  package "Local"       as dom_loc
+  package "Resultado"   as dom_res
+  package "Medalha"     as dom_med
+  package "País"        as dom_pais
+}
+
+package "Infraestrutura" as infra {
+  package "Persistência"   as infra_repo
+  package "Notificações"   as infra_notif
+  package "Exportação"     as infra_export
+}
+
+' Apresentação → Aplicação
+ui_comp --> svc_comp
+ui_insc --> svc_insc
+ui_loc  --> svc_loc
+ui_res  --> svc_res
+ui_med  --> svc_rel
+
+' Aplicação → Domínio
+svc_comp --> dom_comp
+svc_insc --> dom_insc
+svc_insc --> dom_atl
+svc_loc  --> dom_loc
+svc_loc  --> dom_comp
+svc_res  --> dom_res
+svc_res  --> dom_med
+svc_rel  --> dom_med
+svc_rel  --> dom_pais
+
+' Aplicação → Infraestrutura
+svc_comp --> infra_repo
+svc_insc --> infra_repo
+svc_insc --> infra_notif
+svc_loc  --> infra_repo
+svc_res  --> infra_repo
+svc_rel  --> infra_export
+
+@enduml

@@ -1,0 +1,143 @@
+@startuml
+skinparam componentStyle uml2
+skinparam componentBorderColor #333333
+skinparam componentBackgroundColor #FFFFFF
+skinparam componentFontSize 13
+skinparam interfaceBorderColor #555555
+skinparam databaseBorderColor #333333
+skinparam databaseBackgroundColor #FFFFFF
+skinparam nodeBorderColor #333333
+skinparam arrowColor #555555
+skinparam arrowThickness 1
+skinparam linetype ortho
+
+' ─────────────────────────────────────────
+' FRONTEND
+' ─────────────────────────────────────────
+
+package "Frontend" {
+  [Interface Web] as UI
+
+  interface "API REST" as IAPI
+}
+
+' ─────────────────────────────────────────
+' BACKEND
+' ─────────────────────────────────────────
+
+package "Backend" {
+
+  package "Controllers" {
+    [CompetitionController] as CC
+    [RegistrationController] as RC
+    [VenueController] as VC
+    [ResultController] as RsC
+    [ReportController] as RpC
+  }
+
+  package "Services" {
+    [CompetitionService] as CS
+    [RegistrationService] as RS
+    [VenueService] as VS
+    [ResultService] as RsS
+    [MedalReportService] as MRS
+  }
+
+  package "Domain" {
+    [ValidadorConflito] as VAL
+    [GeradorRelatorio] as GR
+  }
+
+  package "Repositories" {
+    [CompetitionRepository] as CRepo
+    [AthleteRepository] as ARepo
+    [VenueRepository] as VRepo
+    [ResultRepository] as RRepo
+    [MedalRepository] as MRepo
+  }
+
+}
+
+' ─────────────────────────────────────────
+' INFRAESTRUTURA
+' ─────────────────────────────────────────
+
+package "Infraestrutura" {
+  [Serviço de E-mail] as EMAIL
+  [Exportador PDF] as PDF
+  [Exportador CSV] as CSV
+}
+
+' ─────────────────────────────────────────
+' PERSISTÊNCIA
+' ─────────────────────────────────────────
+
+database "Banco de Dados\n(PostgreSQL)" as DB
+
+' ─────────────────────────────────────────
+' INTERFACES FORNECIDAS / REQUERIDAS
+' ─────────────────────────────────────────
+
+interface "ICompetitionService"  as ICS
+interface "IRegistrationService" as IRS
+interface "IVenueService"        as IVS
+interface "IResultService"       as IRsS
+interface "IReportService"       as IMrs
+
+interface "IEmailService"  as IEMAIL
+interface "IExportService" as IEXPORT
+
+' ─────────────────────────────────────────
+' CONEXÕES
+' ─────────────────────────────────────────
+
+' Frontend consome API
+UI -down-> IAPI
+IAPI -down- CC
+IAPI -down- RC
+IAPI -down- VC
+IAPI -down- RsC
+IAPI -down- RpC
+
+' Controllers dependem de interfaces de serviço
+CC  -down-> ICS
+RC  -down-> IRS
+VC  -down-> IVS
+RsC -down-> IRsS
+RpC -down-> IMrs
+
+' Services realizam interfaces
+ICS  -down- CS
+IRS  -down- RS
+IVS  -down- VS
+IRsS -down- RsS
+IMrs -down- MRS
+
+' Services usam Domain
+CS  ..> VAL
+VS  ..> VAL
+RS  ..> GR
+MRS ..> GR
+
+' Services usam Repositories
+CS  -down-> CRepo
+RS  -down-> ARepo
+RS  -down-> CRepo
+VS  -down-> VRepo
+RsS -down-> RRepo
+MRS -down-> MRepo
+
+' Services usam Infraestrutura via interfaces
+RS  -down-> IEMAIL
+IEMAIL -down- EMAIL
+MRS -down-> IEXPORT
+IEXPORT -down- PDF
+IEXPORT -down- CSV
+
+' Repositories acessam banco
+CRepo -down-> DB
+ARepo -down-> DB
+VRepo -down-> DB
+RRepo -down-> DB
+MRepo -down-> DB
+@enduml

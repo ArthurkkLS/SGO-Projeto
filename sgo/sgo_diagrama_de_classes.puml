@@ -1,0 +1,216 @@
+@startuml SGO_Classes
+
+skinparam classAttributeIconSize 0
+skinparam classBorderColor #333333
+skinparam classBackgroundColor #FFFFFF
+skinparam classFontSize 13
+skinparam classHeaderBackgroundColor #E8E8E8
+skinparam arrowColor #555555
+skinparam arrowThickness 1
+skinparam linetype ortho
+
+' ─────────────────────────────────────────
+' ENTIDADES PRINCIPAIS
+' ─────────────────────────────────────────
+
+class Pais {
+  - id: UUID
+  - nome: String
+  - sigla: String
+  - bandeira: String
+}
+
+class Atleta {
+  - id: UUID
+  - nome: String
+  - dataNascimento: Date
+  - documento: String
+  + getPais(): Pais
+}
+
+class Local {
+  - id: UUID
+  - nome: String
+  - capacidade: Integer
+  - endereco: String
+  - ativo: Boolean
+  + getModalidadesCompativeis(): List<String>
+  + getAgenda(data: Date): List<Competicao>
+}
+
+class Competicao {
+  - id: UUID
+  - nome: String
+  - modalidade: String
+  - dataHoraInicio: DateTime
+  - dataHoraFim: DateTime
+  - status: StatusCompeticao
+  + isAberta(): Boolean
+  + isRealizada(): Boolean
+}
+
+class Inscricao {
+  - id: UUID
+  - dataInscricao: DateTime
+  - status: StatusInscricao
+  + cancelar(): void
+}
+
+class Resultado {
+  - id: UUID
+  - dataRegistro: DateTime
+  - publicado: Boolean
+  + publicar(): void
+  + corrigir(justificativa: String): void
+}
+
+class Classificacao {
+  - posicao: Integer
+  - tempoOuPontuacao: String
+}
+
+class Medalha {
+  - tipo: TipoMedalha
+  - edicao: String
+}
+
+' ─────────────────────────────────────────
+' ENUMERAÇÕES
+' ─────────────────────────────────────────
+
+enum StatusCompeticao {
+  ABERTA
+  ENCERRADA
+  REALIZADA
+  CANCELADA
+}
+
+enum StatusInscricao {
+  ATIVA
+  CANCELADA
+}
+
+enum TipoMedalha {
+  OURO
+  PRATA
+  BRONZE
+}
+
+' ─────────────────────────────────────────
+' USUÁRIOS / ATORES DO SISTEMA
+' ─────────────────────────────────────────
+
+abstract class Usuario {
+  - id: UUID
+  - nome: String
+  - email: String
+  - senha: String
+  + autenticar(): Boolean
+}
+
+class Organizador {
+  + cadastrarCompeticao(c: Competicao): void
+  + editarCompeticao(c: Competicao): void
+  + alocarLocal(c: Competicao, l: Local): void
+}
+
+class Delegado {
+  + inscreverAtleta(a: Atleta, c: Competicao): Inscricao
+  + cancelarInscricao(i: Inscricao): void
+  + consultarInscricoes(): List<Inscricao>
+}
+
+class Juiz {
+  + registrarResultado(c: Competicao, cls: List<Classificacao>): Resultado
+  + corrigirResultado(r: Resultado, justificativa: String): void
+}
+
+class Dirigente {
+  + visualizarQuadroMedalhas(): List<Medalha>
+  + exportarRelatorio(formato: String): File
+}
+
+' ─────────────────────────────────────────
+' SERVIÇOS DE DOMÍNIO
+' ─────────────────────────────────────────
+
+class ValidadorConflito {
+  + validar(local: Local, inicio: DateTime, fim: DateTime): Boolean
+  + listarHorariosDisponiveis(local: Local, data: Date): List<DateTime>
+}
+
+class GeradorRelatorio {
+  + gerarQuadroMedalhas(filtros: FiltroMedalha): List<ResumoMedalha>
+  + exportarPDF(): File
+  + exportarCSV(): File
+}
+
+class FiltroMedalha {
+  - modalidade: String
+  - dataInicio: Date
+  - dataFim: Date
+}
+
+class ResumoMedalha {
+  - pais: Pais
+  - ouro: Integer
+  - prata: Integer
+  - bronze: Integer
+  - total: Integer
+}
+
+' ─────────────────────────────────────────
+' RELACIONAMENTOS
+' ─────────────────────────────────────────
+
+' Herança
+Usuario <|-- Organizador
+Usuario <|-- Delegado
+Usuario <|-- Juiz
+Usuario <|-- Dirigente
+
+' Atleta e País
+Atleta "*" --> "1" Pais : representa
+
+' Delegado e País
+Delegado "*" --> "1" Pais : representa
+
+' Competição
+Competicao "*" --> "1" Local       : realizada em
+Competicao "1" --> "1" StatusCompeticao
+
+' Inscrição
+Inscricao "1" --> "1" Atleta
+Inscricao "1" --> "1" Competicao
+Inscricao "1" --> "1" Pais         : representa
+Inscricao "1" --> "1" StatusInscricao
+
+' Resultado
+Resultado "1" --> "1" Competicao
+Resultado "1" *-- "1..3" Classificacao : contém
+
+' Classificação
+Classificacao "1" --> "1" Atleta
+Classificacao "1" --> "0..1" Medalha   : gera
+
+' Medalha
+Medalha "1" --> "1" TipoMedalha
+Medalha "1" --> "1" Pais
+
+' Serviços
+ValidadorConflito ..> Local       : usa
+ValidadorConflito ..> Competicao  : usa
+GeradorRelatorio  ..> Medalha     : agrega
+GeradorRelatorio  ..> Pais        : agrega
+GeradorRelatorio  --> FiltroMedalha
+GeradorRelatorio --> ResumoMedalha
+
+' Ações dos atores sobre entidades
+Organizador ..> Competicao       : gerencia
+Organizador ..> Local            : aloca
+Organizador ..> ValidadorConflito : usa
+Delegado    ..> Inscricao        : gerencia
+Juiz        ..> Resultado        : registra
+Dirigente   ..> GeradorRelatorio : usa
+
+@enduml

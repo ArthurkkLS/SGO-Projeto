@@ -1,0 +1,115 @@
+@startuml SGO_Implantacao
+
+skinparam nodeBackgroundColor #FFFFFF
+skinparam nodeBorderColor #333333
+skinparam nodeFontSize 13
+skinparam nodeFontStyle bold
+skinparam artifactBackgroundColor #F5F5F5
+skinparam artifactBorderColor #555555
+skinparam artifactFontSize 12
+skinparam databaseBackgroundColor #FFFFFF
+skinparam databaseBorderColor #333333
+skinparam componentBackgroundColor #FFFFFF
+skinparam componentBorderColor #555555
+skinparam arrowColor #555555
+skinparam arrowThickness 1
+skinparam linetype ortho
+
+' ─────────────────────────────────────────
+' ZONA: USUÁRIO
+' ─────────────────────────────────────────
+
+node "Dispositivo do Usuário" as CLIENT {
+  artifact "Navegador Web" as BROWSER
+}
+
+' ─────────────────────────────────────────
+' ZONA: DMZ
+' ─────────────────────────────────────────
+
+node "DMZ" as DMZ {
+
+  node "Servidor de CDN / Proxy Reverso" as PROXY {
+    artifact "Nginx" as NGINX
+  }
+
+}
+
+' ─────────────────────────────────────────
+' ZONA: APLICAÇÃO
+' ─────────────────────────────────────────
+
+node "Zona de Aplicação" as APPZONE {
+
+  node "Servidor de Frontend\n(Static Hosting)" as FESERVER {
+    artifact "SGO Web App\n(HTML/CSS/JS)" as WEBAPP
+  }
+
+  node "Servidor de Backend\n(App Server)" as BESERVER {
+    artifact "SGO API\n(Spring Boot)" as API
+    artifact "JVM 17" as JVM
+    API -down- JVM
+  }
+
+  node "Servidor de Exportação" as EXPSERVER {
+    artifact "Gerador PDF\n(JasperReports)" as JASPER
+    artifact "Gerador CSV" as CSVGEN
+  }
+
+}
+
+' ─────────────────────────────────────────
+' ZONA: DADOS
+' ─────────────────────────────────────────
+
+node "Zona de Dados" as DATAZONE {
+
+  node "Servidor de Banco de Dados\n(Primary)" as DBPRIMARY {
+    database "PostgreSQL\n(Primary)" as DBPRI
+  }
+
+  node "Servidor de Banco de Dados\n(Replica)" as DBREPLICA {
+    database "PostgreSQL\n(Replica)" as DBREP
+  }
+
+  node "Servidor de Cache" as CACHESERVER {
+    database "Redis" as REDIS
+  }
+
+}
+
+' ─────────────────────────────────────────
+' ZONA: SERVIÇOS EXTERNOS
+' ─────────────────────────────────────────
+
+node "Serviços Externos" as EXTZONE {
+
+  node "Servidor de E-mail" as MAILSERVER {
+    artifact "SMTP / SendGrid" as SMTP
+  }
+
+  node "Armazenamento de Arquivos" as STORAGE {
+    artifact "Object Storage\n(S3 / MinIO)" as S3
+  }
+
+}
+
+' ─────────────────────────────────────────
+' COMUNICAÇÕES
+' ─────────────────────────────────────────
+
+BROWSER    -down-> NGINX      : HTTPS :443
+NGINX      -down-> WEBAPP     : serve estáticos
+NGINX      -down-> API        : proxy reverso\nHTTPS :8080
+
+API        -down-> DBPRI      : JDBC :5432
+API        -down-> REDIS      : TCP :6379
+API        -right-> JASPER    : chamada interna
+API        -right-> CSVGEN    : chamada interna
+JASPER     -right-> S3        : armazena PDF
+CSVGEN     -right-> S3        : armazena CSV
+API        -down-> SMTP       : SMTP/TLS :587
+
+DBPRI      -down-> DBREP      : replicação\nassíncrona
+
+@enduml

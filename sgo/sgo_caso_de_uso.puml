@@ -1,0 +1,82 @@
+@startuml SGO_CasosDeUso
+
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam usecaseBorderColor #555555
+skinparam usecaseBackgroundColor #FAFAFA
+skinparam usecaseFontSize 13
+skinparam actorFontSize 13
+skinparam packageFontSize 12
+skinparam packageBorderColor #AAAAAA
+skinparam arrowColor #555555
+skinparam linetype ortho
+
+left to right direction
+
+actor "Organizador"     as ORG
+actor "Delegado de país" as DEL
+actor "Juiz"            as JUI
+actor "Dirigente COI"   as COI
+actor "Espectador"      as ESP
+
+rectangle "SGO — Sistema de Gestão das Olimpíadas" {
+
+  package "Cadastro de competições" {
+    usecase "Cadastrar competição"          as UC01
+    usecase "Editar competição"             as UC02
+    usecase "Listar e filtrar competições"  as UC03
+  }
+
+  package "Inscrição de atletas" {
+    usecase "Inscrever atleta em competição" as UC04
+    usecase "Consultar inscrições"           as UC05
+    usecase "Cancelar inscrição"             as UC06
+  }
+
+  package "Alocação de locais" {
+    usecase "Cadastrar local"               as UC07
+    usecase "Alocar local a competição"     as UC08
+    usecase "Visualizar agenda do local"    as UC09
+  }
+
+  package "Controle de resultados" {
+    usecase "Registrar resultado"           as UC10
+    usecase "Corrigir resultado"            as UC11
+    usecase "Consultar resultados publicados" as UC12
+  }
+
+  package "Relatório de medalhas" {
+    usecase "Visualizar quadro de medalhas" as UC13
+    usecase "Filtrar quadro de medalhas"    as UC14
+    usecase "Exportar relatório de medalhas" as UC15
+  }
+
+}
+
+' Organizador
+ORG --> UC01
+ORG --> UC02
+ORG --> UC03
+ORG --> UC07
+ORG --> UC08
+ORG --> UC09
+
+' Delegado de país
+DEL --> UC04
+DEL --> UC05
+DEL --> UC06
+
+' Juiz
+JUI --> UC10
+JUI --> UC11
+
+' Espectador
+ESP --> UC03
+ESP --> UC12
+
+' Dirigente COI
+COI --> UC13
+COI --> UC14
+COI --> UC15
+
+@enduml
